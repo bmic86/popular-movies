@@ -2,7 +2,6 @@ package com.example.android.popularmovies1;
 
 
 import android.net.Uri;
-import android.util.Log;
 
 import java.net.MalformedURLException;
 import java.net.URL;
