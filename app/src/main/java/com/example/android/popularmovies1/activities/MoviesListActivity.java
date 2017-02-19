@@ -1,4 +1,4 @@
-package com.example.android.popularmovies1;
+package com.example.android.popularmovies1.activities;
 
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +11,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.example.android.popularmovies1.MovieListItemClickListener;
+import com.example.android.popularmovies1.MoviesAdapter;
+import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
+import com.example.android.popularmovies1.R;
+import com.example.android.popularmovies1.data.SortOrder;
 import com.example.android.popularmovies1.utils.NetworkUtils;
 
 import org.json.JSONException;
@@ -46,7 +51,7 @@ public class MoviesListActivity extends AppCompatActivity {
             if(data != null && !data.isEmpty()) {
                 Log.i(DownloadTask.class.getName(), data);
                 try {
-                    moviesAdapter = new MoviesAdapter(data);
+                    moviesAdapter = new MoviesAdapter(data, listener);
                     recyclerView.setAdapter(moviesAdapter);
                 } catch (JSONException e) {
                     Log.e(DownloadTask.class.getName(), "Unable to parse downloaded result.");
@@ -58,6 +63,7 @@ public class MoviesListActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     MoviesAdapter moviesAdapter;
     ProgressBar progressBar;
+    MovieListItemClickListener listener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +75,8 @@ public class MoviesListActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.rv_movies_list);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(new MoviesAdapter());
+        listener = new MovieListItemClickListener(this);
+        recyclerView.setAdapter(new MoviesAdapter(listener));
 
         URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(SortOrder.BY_MOST_POPULAR);
         new DownloadTask().execute(dataUrl);
