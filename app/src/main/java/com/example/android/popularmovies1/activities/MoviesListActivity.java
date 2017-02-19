@@ -9,11 +9,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.popularmovies1.MovieListItemClickListener;
 import com.example.android.popularmovies1.MoviesAdapter;
+import com.example.android.popularmovies1.data.PageInfo;
 import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
 import com.example.android.popularmovies1.R;
 import com.example.android.popularmovies1.data.SortOrder;
@@ -54,14 +56,33 @@ public class MoviesListActivity extends AppCompatActivity {
                 try {
                     hideError();
                     moviesAdapter = new MoviesAdapter(data, listener);
+                    updatePageNumber(moviesAdapter.getPageInfo());
                     recyclerView.setAdapter(moviesAdapter);
                 } catch (JSONException e) {
-                    showError();
+                    updateViewOnError();
                     Log.e(DownloadTask.class.getName(), "Unable to parse downloaded result.");
                 }
             } else {
-                showError();
+                updateViewOnError();
                 Log.e(DownloadTask.class.getName(), "Downloaded data is empty.");
+            }
+        }
+    }
+
+    public class PageChangeClickListener implements View.OnClickListener {
+        private int stepSize;
+
+
+        public PageChangeClickListener(int stepSize) {
+            this.stepSize = stepSize;
+        }
+
+        @Override
+        public void onClick(View view) {
+            PageInfo pageInfo = moviesAdapter.getPageInfo();
+            int nextPage = pageInfo.getPageNum() + stepSize;
+            if( nextPage > 0 && nextPage <= pageInfo.getTotalPagesNum()) {
+                downloadData(nextPage);
             }
         }
     }
@@ -72,14 +93,56 @@ public class MoviesListActivity extends AppCompatActivity {
     MovieListItemClickListener listener;
     TextView errorTextView;
 
+    Button prevPageButton;
+    Button nextPageButton;
+    TextView pageNumTextView;
+
+    String sortOrder;
+
     private void hideError() {
         errorTextView.setVisibility(View.INVISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
     }
 
+    private void updateViewOnError() {
+        hidePagingTools();
+        showError();
+    }
+
+    private void hidePagingTools() {
+        pageNumTextView.setVisibility(View.INVISIBLE);
+        prevPageButton.setVisibility(View.INVISIBLE);
+        nextPageButton.setVisibility(View.INVISIBLE);
+    }
+
     private void showError() {
         errorTextView.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
+    }
+
+    public void updatePageNumber(PageInfo pageNumber) {
+        int pageNum = pageNumber.getPageNum();
+        int totalPagesNum = pageNumber.getTotalPagesNum();
+
+        pageNumTextView.setText(String.format( getString(R.string.pageNumberInfo), pageNum, totalPagesNum));
+        pageNumTextView.setVisibility(View.VISIBLE);
+
+        if(pageNum > 1) {
+            prevPageButton.setVisibility(View.VISIBLE);
+        } else {
+            prevPageButton.setVisibility(View.INVISIBLE);
+        }
+
+        if(pageNum < totalPagesNum) {
+            nextPageButton.setVisibility(View.VISIBLE);
+        } else {
+            nextPageButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void downloadData(int nextPage) {
+        URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(sortOrder, nextPage);
+        new DownloadTask().execute(dataUrl);
     }
 
     @Override
@@ -96,8 +159,16 @@ public class MoviesListActivity extends AppCompatActivity {
         listener = new MovieListItemClickListener(this);
         recyclerView.setAdapter(new MoviesAdapter(listener));
 
-        URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(SortOrder.BY_MOST_POPULAR);
-        new DownloadTask().execute(dataUrl);
+        nextPageButton = (Button) findViewById(R.id.btn_page_next);
+        nextPageButton.setOnClickListener(new PageChangeClickListener(1));
+
+        prevPageButton = (Button) findViewById(R.id.btn_page_prev);
+        prevPageButton.setOnClickListener(new PageChangeClickListener(-1));
+
+        pageNumTextView = (TextView) findViewById(R.id.tv_page_num);
+
+        sortOrder = SortOrder.BY_MOST_POPULAR;
+        downloadData(1);
     }
 
     @Override
@@ -110,15 +181,14 @@ public class MoviesListActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.item_most_popular) {
-            URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(SortOrder.BY_MOST_POPULAR);
-            new DownloadTask().execute(dataUrl);
+            sortOrder = SortOrder.BY_MOST_POPULAR;
+            downloadData(1);
             return true;
         } else if (id == R.id.item_highest_rated) {
-            URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(SortOrder.BY_HIGHEST_RATED);
-            new DownloadTask().execute(dataUrl);
+            sortOrder = SortOrder.BY_HIGHEST_RATED;
+            downloadData(1);
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 }

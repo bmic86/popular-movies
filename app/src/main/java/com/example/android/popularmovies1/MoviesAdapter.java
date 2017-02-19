@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.android.popularmovies1.data.MovieListItem;
+import com.example.android.popularmovies1.data.PageInfo;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -20,29 +21,34 @@ import java.util.ArrayList;
 
 public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesViewHolder> {
 
-    private static int viewHoldersCount = 0;
-
     private ArrayList<MovieListItem> movies;
     private Context context;
     private final MovieListItemClickListener clickListener;
 
+    private final PageInfo pageInfo;
+
     public MoviesAdapter(MovieListItemClickListener clickListener) {
         movies = new ArrayList<>();
-        viewHoldersCount = 0;
         this.clickListener = clickListener;
+        pageInfo = new PageInfo(0, 0);
     }
 
     public MoviesAdapter(String data, MovieListItemClickListener clickListener) throws JSONException {
         movies = new ArrayList<>();
-        viewHoldersCount = 0;
         this.clickListener = clickListener;
 
         JSONObject root = new JSONObject(data);
+        pageInfo = new PageInfo(root.getInt("page"), root.getInt("total_pages"));
+
         JSONArray results = root.getJSONArray("results");
         for(int i=0; i<results.length(); ++i) {
             JSONObject obj = (JSONObject)results.get(i);
             movies.add( new MovieListItem(obj) );
         }
+    }
+
+    public PageInfo getPageInfo() {
+        return pageInfo;
     }
 
     @Override
@@ -53,7 +59,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
         View view = inflater.inflate(R.layout.movies_list_item, parent, false);
         MoviesViewHolder viewHolder = new MoviesViewHolder(view);
 
-        viewHoldersCount++;
         return viewHolder;
     }
 
