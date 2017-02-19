@@ -6,4 +6,5 @@
     <string name="original_title">Original title:</string>
     <string name="release_date">Release date:</string>
     <string name="vote_average">Vote average:</string>
+    <string name="error">Cannot download valid data from the server.</string>
 </resources>

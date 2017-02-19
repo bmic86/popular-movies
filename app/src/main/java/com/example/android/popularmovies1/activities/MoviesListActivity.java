@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.example.android.popularmovies1.MovieListItemClickListener;
 import com.example.android.popularmovies1.MoviesAdapter;
@@ -51,11 +52,16 @@ public class MoviesListActivity extends AppCompatActivity {
             if(data != null && !data.isEmpty()) {
                 Log.i(DownloadTask.class.getName(), data);
                 try {
+                    hideError();
                     moviesAdapter = new MoviesAdapter(data, listener);
                     recyclerView.setAdapter(moviesAdapter);
                 } catch (JSONException e) {
+                    showError();
                     Log.e(DownloadTask.class.getName(), "Unable to parse downloaded result.");
                 }
+            } else {
+                showError();
+                Log.e(DownloadTask.class.getName(), "Downloaded data is empty.");
             }
         }
     }
@@ -64,6 +70,17 @@ public class MoviesListActivity extends AppCompatActivity {
     MoviesAdapter moviesAdapter;
     ProgressBar progressBar;
     MovieListItemClickListener listener;
+    TextView errorTextView;
+
+    private void hideError() {
+        errorTextView.setVisibility(View.INVISIBLE);
+        recyclerView.setVisibility(View.VISIBLE);
+    }
+
+    private void showError() {
+        errorTextView.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.INVISIBLE);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +88,7 @@ public class MoviesListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_movies_list);
 
         progressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
+        errorTextView = (TextView) findViewById(R.id.tv_error);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_movies_list);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
