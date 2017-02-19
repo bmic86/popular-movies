@@ -7,7 +7,7 @@
     <string name="release_date">Release date:</string>
     <string name="vote_average">Vote average:</string>
     <string name="error">Cannot download valid data from the server.</string>
-    <string name="page_prev">\u2b05</string>
-    <string name="page_next">\u27a1</string>
+    <string name="page_prev">\u2190</string>
+    <string name="page_next">\u2192</string>
     <string name="pageNumberInfo" formatted="false">Page %d from %d</string>
 </resources>

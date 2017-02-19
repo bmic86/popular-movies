@@ -15,6 +15,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/btn_page_prev"
             android:text="@string/page_prev"
+            android:textSize="18dp"
             android:visibility="invisible"/>
         <TextView
             android:layout_width="wrap_content"
@@ -29,6 +30,7 @@
             android:text="@string/page_next"
             android:id="@+id/btn_page_next"
             android:layout_gravity="right"
+            android:textSize="18dp"
             android:visibility="invisible"/>
     </LinearLayout>
 
