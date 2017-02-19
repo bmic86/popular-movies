@@ -48,9 +48,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
         View view = inflater.inflate(R.layout.movies_list_item, parent, false);
         MoviesViewHolder viewHolder = new MoviesViewHolder(view);
 
-        MovieListItem movie = movies.get(viewHoldersCount++);
-        Picasso.with(context).load("http://image.tmdb.org/t/p/w185" + movie.getPosterUrlPath()).into(viewHolder.posterImageView);
-
+        viewHoldersCount++;
         return viewHolder;
     }
 
