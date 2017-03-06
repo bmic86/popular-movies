@@ -47,8 +47,18 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
         }
     }
 
+    public MoviesAdapter(ArrayList<MovieListItem> movies, PageInfo pageInfo, MovieListItemClickListener clickListener) {
+        this.movies = movies;
+        this.pageInfo = pageInfo;
+        this.clickListener = clickListener;
+    }
+
     public PageInfo getPageInfo() {
         return pageInfo;
+    }
+
+    public ArrayList<MovieListItem> getMovies() {
+        return movies;
     }
 
     @Override

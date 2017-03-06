@@ -1,6 +1,7 @@
 package com.example.android.popularmovies1.activities;
 
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 import com.example.android.popularmovies1.MovieListItemClickListener;
 import com.example.android.popularmovies1.MoviesAdapter;
+import com.example.android.popularmovies1.data.MovieListItem;
 import com.example.android.popularmovies1.data.PageInfo;
 import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
 import com.example.android.popularmovies1.R;
@@ -25,8 +27,12 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class MoviesListActivity extends AppCompatActivity {
+
+    private static final String STORAGE_KEY_MOVIES = "movies";
+    private static final String STORAGE_KEY_PAGEINFO = "pageinfo";
 
     private class DownloadTask extends AsyncTask<URL, Void, String> {
 
@@ -168,7 +174,31 @@ public class MoviesListActivity extends AppCompatActivity {
         pageNumTextView = (TextView) findViewById(R.id.tv_page_num);
 
         sortOrder = SortOrder.BY_MOST_POPULAR;
-        downloadData(1);
+
+        loadData(savedInstanceState);
+    }
+
+    private void loadData(Bundle savedInstanceState) {
+        ArrayList<MovieListItem> moviesRestored = null;
+        PageInfo pageInfoRestored = null;
+
+        if(savedInstanceState != null) {
+            if(savedInstanceState.containsKey(STORAGE_KEY_MOVIES)) {
+                moviesRestored = (ArrayList<MovieListItem>)(ArrayList<?>)(savedInstanceState.getParcelableArrayList(STORAGE_KEY_MOVIES));
+            }
+            if(savedInstanceState.containsKey(STORAGE_KEY_PAGEINFO)) {
+                pageInfoRestored = savedInstanceState.getParcelable(STORAGE_KEY_PAGEINFO);
+            }
+        }
+
+        if(moviesRestored != null && pageInfoRestored != null) {
+            moviesAdapter = new MoviesAdapter(moviesRestored, pageInfoRestored, listener);
+            updatePageNumber(moviesAdapter.getPageInfo());
+            recyclerView.setAdapter(moviesAdapter);
+        }
+        else {
+            downloadData( pageInfoRestored != null ? pageInfoRestored.getPageNum() : 1);
+        }
     }
 
     @Override
@@ -190,5 +220,16 @@ public class MoviesListActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        ArrayList<MovieListItem> movies = moviesAdapter.getMovies();
+        PageInfo pageInfo = moviesAdapter.getPageInfo();
+
+        outState.putParcelableArrayList(STORAGE_KEY_MOVIES, movies);
+        outState.putParcelable(STORAGE_KEY_PAGEINFO, pageInfo);
     }
 }

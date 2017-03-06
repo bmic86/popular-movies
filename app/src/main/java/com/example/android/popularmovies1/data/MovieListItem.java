@@ -1,9 +1,12 @@
 package com.example.android.popularmovies1.data;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MovieListItem {
+public class MovieListItem implements Parcelable {
 
     private static final String BASE_POSTER_URL = "http://image.tmdb.org/t/p/w185";
 
@@ -24,6 +27,27 @@ public class MovieListItem {
             releaseDate = json.getString("release_date");
         }
     }
+
+    public MovieListItem(Parcel parcel) {
+        id = parcel.readLong();
+        posterUrlPath = parcel.readString();
+        originalTitle = parcel.readString();
+        releaseDate = parcel.readString();
+        overview = parcel.readString();
+        voteAverage = parcel.readString();
+    }
+
+    public static final Parcelable.Creator<MovieListItem> CREATOR
+            = new Parcelable.Creator<MovieListItem>() {
+        public MovieListItem createFromParcel(Parcel in) {
+            return new MovieListItem(in);
+        }
+
+        public MovieListItem[] newArray(int size) {
+            return new MovieListItem[size];
+        }
+    };
+
 
     public long getId() {
         return id;
@@ -49,4 +73,18 @@ public class MovieListItem {
         return voteAverage;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeLong(id);
+        parcel.writeString(posterUrlPath);
+        parcel.writeString(originalTitle);
+        parcel.writeString(releaseDate);
+        parcel.writeString(overview);
+        parcel.writeString(voteAverage);
+    }
 }
