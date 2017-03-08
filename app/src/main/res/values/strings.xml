@@ -10,4 +10,6 @@
     <string name="page_prev">\u2190</string>
     <string name="page_next">\u2192</string>
     <string name="pageNumberInfo" formatted="false">Page %d from %d</string>
+    <string name="added_to_favorites">Movie added to favorites</string>
+    <string name="removed_from_favorites">Movie removed from favorites</string>
 </resources>

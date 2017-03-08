@@ -9,8 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.example.android.popularmovies1.data.MovieListItem;
-import com.example.android.popularmovies1.data.PageInfo;
+import com.example.android.popularmovies1.data.entities.MovieListItem;
+import com.example.android.popularmovies1.data.entities.PageInfo;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;

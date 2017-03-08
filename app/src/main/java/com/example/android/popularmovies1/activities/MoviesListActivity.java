@@ -1,7 +1,6 @@
 package com.example.android.popularmovies1.activities;
 
 import android.os.AsyncTask;
-import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -16,8 +15,8 @@ import android.widget.TextView;
 
 import com.example.android.popularmovies1.MovieListItemClickListener;
 import com.example.android.popularmovies1.MoviesAdapter;
-import com.example.android.popularmovies1.data.MovieListItem;
-import com.example.android.popularmovies1.data.PageInfo;
+import com.example.android.popularmovies1.data.entities.MovieListItem;
+import com.example.android.popularmovies1.data.entities.PageInfo;
 import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
 import com.example.android.popularmovies1.R;
 import com.example.android.popularmovies1.data.SortOrder;

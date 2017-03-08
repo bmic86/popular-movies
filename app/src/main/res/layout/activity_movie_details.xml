@@ -15,15 +15,29 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         tools:context="com.example.android.popularmovies1.activities.MovieDetailsActivity">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/tv_original_title_value"
-            android:layout_above="@+id/ll_details"
-            android:layout_marginBottom="16dp"
-            android:layout_gravity="center"
-            android:textSize="20sp"
-            android:textStyle="bold"/>
+            android:orientation="horizontal"
+            android:id="@+id/ll_title"
+            android:layout_above="@+id/ll_details">
+            <ImageButton
+                android:id="@+id/ib_add_to_favorites"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_favorite_border_48dp"
+                android:onClick="handleLikeButtonClick"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_original_title_value"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"
+                android:paddingRight="48dp"
+                android:paddingTop="8dp"/>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -36,7 +50,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/iv_details_poster"
-            android:layout_below="@+id/tv_original_title_value"/>
+            android:layout_below="@+id/ll_title"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
