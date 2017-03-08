@@ -1,15 +1,10 @@
 package com.example.android.popularmovies1.activities;
 
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -18,13 +13,12 @@ import android.widget.Toast;
 
 import com.example.android.popularmovies1.MovieDetailsIntent;
 import com.example.android.popularmovies1.R;
-import com.example.android.popularmovies1.data.FavoriteMoviesContract;
 import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
 import com.example.android.popularmovies1.data.entities.MovieListItemDetails;
 import com.squareup.picasso.Picasso;
 
-public class MovieDetailsActivity extends AppCompatActivity {
+public class MovieDetailsActivity extends SettingsMenuBaseActivity {
 
     private TextView originalTitleTextView;
     private TextView overviewTextView;
@@ -74,6 +68,13 @@ public class MovieDetailsActivity extends AppCompatActivity {
         setFavoriteButtonState(FavoriteMoviesHelper.isMovieFavorite(this, listItem.getId()));
 
         movieListItemDetails = new MovieListItemDetails(listItem);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = new MenuInflater(this);
+        inflater.inflate(R.menu.details_menu, menu);
+        return true;
     }
 
     public void handleLikeButtonClick(View view) {

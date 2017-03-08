@@ -1,5 +1,6 @@
 package com.example.android.popularmovies1.activities;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MoviesListActivity extends AppCompatActivity {
+public class MoviesListActivity extends SettingsMenuBaseActivity {
 
     private static final String STORAGE_KEY_MOVIES = "movies";
     private static final String STORAGE_KEY_PAGEINFO = "pageinfo";
@@ -209,15 +210,18 @@ public class MoviesListActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
         if(id == R.id.item_most_popular) {
             sortOrder = SortOrder.BY_MOST_POPULAR;
             downloadData(1);
             return true;
-        } else if (id == R.id.item_highest_rated) {
+        }
+        else if (id == R.id.item_highest_rated) {
             sortOrder = SortOrder.BY_HIGHEST_RATED;
             downloadData(1);
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 

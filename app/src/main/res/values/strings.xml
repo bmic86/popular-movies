@@ -12,4 +12,8 @@
     <string name="pageNumberInfo" formatted="false">Page %d from %d</string>
     <string name="added_to_favorites">Movie added to favorites</string>
     <string name="removed_from_favorites">Movie removed from favorites</string>
+    <string name="settings">Settings</string>
+    <string name="favorites_list">List of favorite movies</string>
+    <string name="shown">Shown</string>
+    <string name="hidden">Hidden</string>
 </resources>
