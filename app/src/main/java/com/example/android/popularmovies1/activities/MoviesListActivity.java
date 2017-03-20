@@ -1,12 +1,10 @@
 package com.example.android.popularmovies1.activities;
 
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,65 +12,79 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.android.popularmovies1.FavoritesListStateManager;
 import com.example.android.popularmovies1.MovieListItemClickListener;
 import com.example.android.popularmovies1.MoviesAdapter;
+import com.example.android.popularmovies1.tasks.DownloadTaskForCustomListListener;
+import com.example.android.popularmovies1.tasks.DownloadTaskListener;
+import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
+import com.example.android.popularmovies1.data.entities.FavoriteMoviesList;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
 import com.example.android.popularmovies1.data.entities.PageInfo;
+import com.example.android.popularmovies1.tasks.DownloadTask;
+import com.example.android.popularmovies1.tasks.DownloadTaskForCustomList;
+import com.example.android.popularmovies1.utils.AppSettings;
 import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
 import com.example.android.popularmovies1.R;
-import com.example.android.popularmovies1.data.SortOrder;
-import com.example.android.popularmovies1.utils.NetworkUtils;
+import com.example.android.popularmovies1.data.MoviesListMode;
 
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MoviesListActivity extends SettingsMenuBaseActivity {
+public class MoviesListActivity extends SettingsMenuBaseActivity
+        implements SharedPreferences.OnSharedPreferenceChangeListener,
+        DownloadTaskListener,
+        DownloadTaskForCustomListListener{
 
     private static final String STORAGE_KEY_MOVIES = "movies";
     private static final String STORAGE_KEY_PAGEINFO = "pageinfo";
+    private static final String STORAGE_KEY_MODE = "mode";
 
-    private class DownloadTask extends AsyncTask<URL, Void, String> {
+    private RecyclerView recyclerView;
+    private MoviesAdapter moviesAdapter;
+    private ProgressBar progressBar;
+    private MovieListItemClickListener listener;
+    private TextView errorTextView;
+    private Menu menu;
 
-        @Override
-        protected void onPreExecute() {
-            progressBar.setVisibility(View.VISIBLE);
-        }
+    private Button prevPageButton;
+    private Button nextPageButton;
+    private TextView pageNumTextView;
 
-        @Override
-        protected String doInBackground(URL... urls) {
-            URL searchUrl = urls[0];
-            String results = null;
-            try {
-                results = NetworkUtils.getResponseFromHttpUrl(searchUrl);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return results;
-        }
+    private MoviesListMode mode;
 
-        @Override
-        protected void onPostExecute(String data) {
-            progressBar.setVisibility(View.INVISIBLE);
+    @Override
+    public void onDataProcess(String data) throws JSONException {
+        hideError();
+        moviesAdapter = new MoviesAdapter(data, listener);
+        updatePageNumber(moviesAdapter.getPageInfo());
+        recyclerView.setAdapter(moviesAdapter);
+    }
 
-            if(data != null && !data.isEmpty()) {
-                Log.i(DownloadTask.class.getName(), data);
-                try {
-                    hideError();
-                    moviesAdapter = new MoviesAdapter(data, listener);
-                    updatePageNumber(moviesAdapter.getPageInfo());
-                    recyclerView.setAdapter(moviesAdapter);
-                } catch (JSONException e) {
-                    updateViewOnError();
-                    Log.e(DownloadTask.class.getName(), "Unable to parse downloaded result.");
-                }
-            } else {
-                updateViewOnError();
-                Log.e(DownloadTask.class.getName(), "Downloaded data is empty.");
-            }
-        }
+    @Override
+    public void onDataProcessError() {
+        hidePagingTools();
+        showError();
+    }
+
+    @Override
+    public void onStartDownloadingData() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onStartProcessingData() {
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onDataProcess(String[] data, PageInfo pageInfo) throws JSONException {
+        moviesAdapter = new MoviesAdapter(pageInfo, listener);
+        moviesAdapter.addMovies(data);
+        updatePageNumber(pageInfo);
+        recyclerView.setAdapter(moviesAdapter);
     }
 
     public class PageChangeClickListener implements View.OnClickListener {
@@ -93,26 +105,9 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
         }
     }
 
-    RecyclerView recyclerView;
-    MoviesAdapter moviesAdapter;
-    ProgressBar progressBar;
-    MovieListItemClickListener listener;
-    TextView errorTextView;
-
-    Button prevPageButton;
-    Button nextPageButton;
-    TextView pageNumTextView;
-
-    String sortOrder;
-
     private void hideError() {
         errorTextView.setVisibility(View.INVISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
-    }
-
-    private void updateViewOnError() {
-        hidePagingTools();
-        showError();
     }
 
     private void hidePagingTools() {
@@ -130,7 +125,7 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
         int pageNum = pageNumber.getPageNum();
         int totalPagesNum = pageNumber.getTotalPagesNum();
 
-        pageNumTextView.setText(String.format( getString(R.string.pageNumberInfo), pageNum, totalPagesNum));
+        pageNumTextView.setText(String.format(getString(R.string.pageNumberInfo), pageNum, totalPagesNum));
         pageNumTextView.setVisibility(View.VISIBLE);
 
         if(pageNum > 1) {
@@ -146,9 +141,15 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
         }
     }
 
-    private void downloadData(int nextPage) {
-        URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(sortOrder, nextPage);
-        new DownloadTask().execute(dataUrl);
+    private void downloadData(int page) {
+        if(mode != MoviesListMode.FAVORITES) {
+            URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(mode.toURLParam(), page);
+            new DownloadTask(this).execute(dataUrl);
+        } else {
+            FavoriteMoviesList moviesList = FavoriteMoviesHelper.getFavoriteMoviesList(this, page);
+            URL[] dataUrls = MoviesUrlBuilder.buildFavoriteMoviesUrls(moviesList.getMovieIds());
+            new DownloadTaskForCustomList(this, moviesList.getPageInfo()).execute(dataUrls);
+        }
     }
 
     @Override
@@ -173,14 +174,44 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
 
         pageNumTextView = (TextView) findViewById(R.id.tv_page_num);
 
-        sortOrder = SortOrder.BY_MOST_POPULAR;
-
+        setDefaultMode();
         loadData(savedInstanceState);
+    }
+
+    private void setDefaultMode() {
+        if(AppSettings.isShowFavorites(this)) {
+            mode = MoviesListMode.FAVORITES;
+        } else {
+            mode = MoviesListMode.BY_MOST_POPULAR;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(getString(R.string.show_favorites_key).equals(key)) {
+            updateMenuOptions();
+            FavoritesListStateManager.getInstance().setFavoritesEnabledChanged();
+        }
+    }
+
+    private void updateMenuOptions() {
+        boolean showFavorites = AppSettings.isShowFavorites(this);
+        MenuItem item = menu.findItem(R.id.item_favorites);
+        item.setVisible(showFavorites);
     }
 
     private void loadData(Bundle savedInstanceState) {
         ArrayList<MovieListItem> moviesRestored = null;
         PageInfo pageInfoRestored = null;
+        Integer modeRestored = null;
 
         if(savedInstanceState != null) {
             if(savedInstanceState.containsKey(STORAGE_KEY_MOVIES)) {
@@ -189,12 +220,16 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
             if(savedInstanceState.containsKey(STORAGE_KEY_PAGEINFO)) {
                 pageInfoRestored = savedInstanceState.getParcelable(STORAGE_KEY_PAGEINFO);
             }
+            if(savedInstanceState.containsKey(STORAGE_KEY_MODE)) {
+                modeRestored = savedInstanceState.getInt(STORAGE_KEY_MODE);
+            }
         }
 
-        if(moviesRestored != null && pageInfoRestored != null) {
+        if(moviesRestored != null && pageInfoRestored != null && modeRestored != null) {
             moviesAdapter = new MoviesAdapter(moviesRestored, pageInfoRestored, listener);
             updatePageNumber(moviesAdapter.getPageInfo());
             recyclerView.setAdapter(moviesAdapter);
+            mode = MoviesListMode.values()[modeRestored];
         }
         else {
             downloadData( pageInfoRestored != null ? pageInfoRestored.getPageNum() : 1);
@@ -202,8 +237,24 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if(FavoritesListStateManager.getInstance().getAndResetFavoritesEnabledChanged()) {
+            setDefaultMode();
+            downloadData(1);
+        } else if (FavoritesListStateManager.getInstance().getAndResetFavoritesListChanged()) {
+            downloadData(1);
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        this.menu = menu;
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        updateMenuOptions();
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
         return true;
     }
 
@@ -212,12 +263,16 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
         int id = item.getItemId();
 
         if(id == R.id.item_most_popular) {
-            sortOrder = SortOrder.BY_MOST_POPULAR;
+            mode = MoviesListMode.BY_MOST_POPULAR;
             downloadData(1);
             return true;
         }
         else if (id == R.id.item_highest_rated) {
-            sortOrder = SortOrder.BY_HIGHEST_RATED;
+            mode = MoviesListMode.BY_HIGHEST_RATED;
+            downloadData(1);
+            return true;
+        } else if (id == R.id.item_favorites) {
+            mode = MoviesListMode.FAVORITES;
             downloadData(1);
             return true;
         }
@@ -234,5 +289,6 @@ public class MoviesListActivity extends SettingsMenuBaseActivity {
 
         outState.putParcelableArrayList(STORAGE_KEY_MOVIES, movies);
         outState.putParcelable(STORAGE_KEY_PAGEINFO, pageInfo);
+        outState.putInt(STORAGE_KEY_MODE, mode.getValue());
     }
 }

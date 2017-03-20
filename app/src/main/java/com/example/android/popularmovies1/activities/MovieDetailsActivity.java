@@ -1,7 +1,6 @@
 package com.example.android.popularmovies1.activities;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -11,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.popularmovies1.FavoritesListStateManager;
 import com.example.android.popularmovies1.MovieDetailsIntent;
 import com.example.android.popularmovies1.R;
 import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
@@ -81,6 +81,7 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity {
         boolean isFavorite = FavoriteMoviesHelper.changeMovieFavoritesState(this, movieListItemDetails.getMovieListItem());
 
         setFavoriteButtonState(isFavorite);
+        FavoritesListStateManager.getInstance().setFavoritesListChanged();
 
         int messageId = (isFavorite) ? R.string.added_to_favorites : R.string.removed_from_favorites;
         ShowMessageToast(messageId);

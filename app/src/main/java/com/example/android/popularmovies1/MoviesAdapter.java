@@ -33,6 +33,12 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
         pageInfo = new PageInfo(0, 0);
     }
 
+    public MoviesAdapter(PageInfo pageInfo, MovieListItemClickListener clickListener) {
+        movies = new ArrayList<>();
+        this.clickListener = clickListener;
+        this.pageInfo = pageInfo;
+    }
+
     public MoviesAdapter(String data, MovieListItemClickListener clickListener) throws JSONException {
         movies = new ArrayList<>();
         this.clickListener = clickListener;
@@ -42,8 +48,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
 
         JSONArray results = root.getJSONArray("results");
         for(int i=0; i<results.length(); ++i) {
-            JSONObject obj = (JSONObject)results.get(i);
-            movies.add( new MovieListItem(obj) );
+            addMovie((JSONObject)results.get(i));
         }
     }
 
@@ -80,6 +85,22 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
     @Override
     public int getItemCount() {
         return movies.size();
+    }
+
+    public void addMovies(String[] data) throws JSONException {
+        for (String movieData : data) {
+            if(movieData != null && !movieData.isEmpty())
+                addMovie(movieData);
+        }
+    }
+
+    private void addMovie(String data) throws JSONException {
+        JSONObject root = new JSONObject(data);
+        addMovie(root);
+    }
+
+    private void addMovie(JSONObject movie) throws JSONException{
+        movies.add( new MovieListItem(movie) );
     }
 
     public class MoviesViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
