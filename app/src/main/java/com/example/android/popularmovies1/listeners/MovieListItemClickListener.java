@@ -1,5 +1,6 @@
-package com.example.android.popularmovies1;
+package com.example.android.popularmovies1.listeners;
 
+import com.example.android.popularmovies1.MovieDetailsIntent;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
 import com.example.android.popularmovies1.activities.MovieDetailsActivity;
 import com.example.android.popularmovies1.activities.MoviesListActivity;

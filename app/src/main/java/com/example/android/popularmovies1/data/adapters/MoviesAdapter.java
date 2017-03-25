@@ -1,4 +1,4 @@
-package com.example.android.popularmovies1;
+package com.example.android.popularmovies1.data.adapters;
 
 
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.example.android.popularmovies1.listeners.MovieListItemClickListener;
+import com.example.android.popularmovies1.R;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
 import com.example.android.popularmovies1.data.entities.PageInfo;
 import com.squareup.picasso.Picasso;
@@ -73,7 +75,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
 
         View view = inflater.inflate(R.layout.movies_list_item, parent, false);
         MoviesViewHolder viewHolder = new MoviesViewHolder(view);
-
         return viewHolder;
     }
 

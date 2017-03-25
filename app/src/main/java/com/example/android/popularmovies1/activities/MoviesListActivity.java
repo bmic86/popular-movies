@@ -13,8 +13,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.popularmovies1.FavoritesListStateManager;
-import com.example.android.popularmovies1.MovieListItemClickListener;
-import com.example.android.popularmovies1.MoviesAdapter;
+import com.example.android.popularmovies1.listeners.MovieListItemClickListener;
+import com.example.android.popularmovies1.data.adapters.MoviesAdapter;
 import com.example.android.popularmovies1.tasks.DownloadTaskForCustomListListener;
 import com.example.android.popularmovies1.tasks.DownloadTaskListener;
 import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
@@ -157,8 +157,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movies_list);
 
-        progressBar = (ProgressBar) findViewById(R.id.pb_loading_indicator);
-        errorTextView = (TextView) findViewById(R.id.tv_error);
+        progressBar = (ProgressBar) findViewById(R.id.pb_movies_loading_indicator);
+        errorTextView = (TextView) findViewById(R.id.tv_movies_error);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_movies_list);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));

@@ -1,11 +1,6 @@
 package com.example.android.popularmovies1.utils;
 
-
-import android.content.Context;
 import android.net.Uri;
-
-import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
-import com.example.android.popularmovies1.data.entities.FavoriteMoviesList;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,26 +12,30 @@ public final class MoviesUrlBuilder {
     private final static String API_KEY_QUERY = "api_key";
     private final static String PAGE_QUERY = "page";
     private final static String BASE_URL = "https://api.themoviedb.org/3/movie/";
+    private final static String VIDEOS_QUERY = "videos";
 
     private MoviesUrlBuilder() {
     }
 
 
     public static URL buildPopularMoviesURL(String sortOrder, int pageNum) {
-        return getUrlForSortedList(sortOrder, pageNum);
+        return buildUrl(BASE_URL + sortOrder, pageNum);
     }
 
     public static URL[] buildFavoriteMoviesUrls(long[] movieIds) {
         URL[] result = new URL[movieIds.length];
         for (int i=0; i<result.length; ++i) {
-            result[i] = getUrlForMovie(movieIds[i]);
+            result[i] = buildUrl(BASE_URL + String.valueOf(movieIds[i]));
         }
         return result;
     }
 
-    private static URL getUrlForSortedList(String key, int pageNum) {
-        Uri uri = Uri.parse(BASE_URL + key).buildUpon()
-                .appendQueryParameter(PAGE_QUERY, String.valueOf(pageNum))
+    public static URL buildMovieRelatedVideosUrl(long movieId) {
+        return buildUrl(BASE_URL + String.valueOf(movieId) + '/' + VIDEOS_QUERY);
+    }
+
+    private static URL buildUrl(String baseUrl) {
+        Uri uri = Uri.parse(baseUrl).buildUpon()
                 .appendQueryParameter(API_KEY_QUERY, API_KEY)
                 .build();
 
@@ -49,8 +48,9 @@ public final class MoviesUrlBuilder {
         return url;
     }
 
-    private static URL getUrlForMovie(long movieId) {
-        Uri uri = Uri.parse(BASE_URL + String.valueOf(movieId)).buildUpon()
+    private static URL buildUrl(String baseUrl, int pageNum) {
+        Uri uri = Uri.parse(baseUrl).buildUpon()
+                .appendQueryParameter(PAGE_QUERY, String.valueOf(pageNum))
                 .appendQueryParameter(API_KEY_QUERY, API_KEY)
                 .build();
 
