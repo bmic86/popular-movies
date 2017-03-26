@@ -52,6 +52,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
     private TextView errorTextView;
     private Menu menu;
 
+    private TextView moviesListHeaderTextView;
+
     private Button prevPageButton;
     private Button nextPageButton;
     private TextView pageNumTextView;
@@ -64,11 +66,12 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         moviesAdapter = new MoviesAdapter(data, listener);
         updatePageNumber(moviesAdapter.getPageInfo());
         recyclerView.setAdapter(moviesAdapter);
+
+        moviesListHeaderTextView.setText(mode.toListDisplayHeader(getBaseContext()));
     }
 
     @Override
     public void onDataProcessError() {
-        hidePagingTools();
         showError();
     }
 
@@ -88,23 +91,30 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         moviesAdapter.addMovies(data);
         updatePageNumber(pageInfo);
         recyclerView.setAdapter(moviesAdapter);
+
+        moviesListHeaderTextView.setText(mode.toListDisplayHeader(getBaseContext()));
     }
 
     private void hideError() {
         errorTextView.setVisibility(View.INVISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
-    }
-
-    private void hidePagingTools() {
-        pageNumTextView.setVisibility(View.INVISIBLE);
-        prevPageButton.setVisibility(View.INVISIBLE);
-        nextPageButton.setVisibility(View.INVISIBLE);
+        moviesListHeaderTextView.setVisibility(View.VISIBLE);
+        setPagingToolsVisibility(View.VISIBLE);
     }
 
     private void showError() {
         errorTextView.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
+        moviesListHeaderTextView.setVisibility(View.INVISIBLE);
+        setPagingToolsVisibility(View.INVISIBLE);
     }
+
+    private void setPagingToolsVisibility(int visibility) {
+        pageNumTextView.setVisibility(visibility);
+        prevPageButton.setVisibility(visibility);
+        nextPageButton.setVisibility(visibility);
+    }
+
 
     public void updatePageNumber(PageInfo pageNumber) {
         int pageNum = pageNumber.getPageNum();
@@ -154,7 +164,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setHasFixedSize(true);
         listener = new MovieListItemClickListener(this);
-        recyclerView.setAdapter(new MoviesAdapter(listener));
+        moviesAdapter = new MoviesAdapter(listener);
+        recyclerView.setAdapter(moviesAdapter);
 
         nextPageButton = (Button) findViewById(R.id.btn_page_next);
         nextPageButton.setOnClickListener(new PageChangeClickListener(1, this));
@@ -163,6 +174,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         prevPageButton.setOnClickListener(new PageChangeClickListener(-1, this));
 
         pageNumTextView = (TextView) findViewById(R.id.tv_page_num);
+
+        moviesListHeaderTextView = (TextView) findViewById(R.id.tv_movies_list_header);
 
         setDefaultMode();
         loadData(savedInstanceState);
@@ -220,6 +233,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
             updatePageNumber(moviesAdapter.getPageInfo());
             recyclerView.setAdapter(moviesAdapter);
             mode = MoviesListMode.values()[modeRestored];
+
+            moviesListHeaderTextView.setText(mode.toListDisplayHeader(getBaseContext()));
         }
         else {
             downloadData( pageInfoRestored != null ? pageInfoRestored.getPageNum() : 1);
@@ -277,8 +292,10 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         ArrayList<MovieListItem> movies = moviesAdapter.getMovies();
         PageInfo pageInfo = moviesAdapter.getPageInfo();
 
-        outState.putParcelableArrayList(STORAGE_KEY_MOVIES, movies);
-        outState.putParcelable(STORAGE_KEY_PAGEINFO, pageInfo);
+        if(movies != null && movies.size() > 0) {
+            outState.putParcelableArrayList(STORAGE_KEY_MOVIES, movies);
+            outState.putParcelable(STORAGE_KEY_PAGEINFO, pageInfo);
+        }
         outState.putInt(STORAGE_KEY_MODE, mode.getValue());
     }
 }

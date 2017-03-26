@@ -181,13 +181,16 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity
         super.onSaveInstanceState(outState);
 
         ArrayList<MovieRelatedVideoListItem> videos = videosAdapter.getVideos();
-        outState.putParcelableArrayList(STORAGE_KEY_VIDEOS, videos);
-
-        PageInfo pageInfo = getPageInfo();
-        outState.putParcelable(STORAGE_KEY_REVIEWS_PAGEINFO, pageInfo);
+        if(videos != null && videos.size() > 0) {
+            outState.putParcelableArrayList(STORAGE_KEY_VIDEOS, videos);
+        }
 
         ArrayList<MovieReviewListItem> reviews = reviewsAdapter.getReviews();
-        outState.putParcelableArrayList(STORAGE_KEY_REVIEWS, reviews);
+        if(reviews != null && reviews.size() > 0) {
+            PageInfo pageInfo = getPageInfo();
+            outState.putParcelable(STORAGE_KEY_REVIEWS_PAGEINFO, pageInfo);
+            outState.putParcelableArrayList(STORAGE_KEY_REVIEWS, reviews);
+        }
     }
 
     @Override

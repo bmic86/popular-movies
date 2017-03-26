@@ -24,4 +24,7 @@
     <string name="video_open_error">Error. Could not open video.</string>
     <string name="user_review_header">Review posted by %s</string>
     <string name="reviews_list_header">User reviews</string>
+    <string name="most_popular_list_header">Most popular movies</string>
+    <string name="top_rated_list_header">Top rated movies</string>
+    <string name="favorites_list_header">My favorite movies</string>
 </resources>

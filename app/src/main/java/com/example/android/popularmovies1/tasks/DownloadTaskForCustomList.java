@@ -47,10 +47,19 @@ public class DownloadTaskForCustomList extends AsyncTask<URL, Void, String[]> {
         listener.onStartProcessingData();
 
         if(data != null) {
+
+            int notDownloaded = 0;
+
             for (String s : data) {
                 if(s == null || s.isEmpty()) {
                     Log.e(DownloadTask.class.getName(), "Downloaded data is incomplete.");
+                    ++notDownloaded;
                 }
+            }
+
+            if(notDownloaded == data.length) {
+                listener.onDataProcessError();
+                return;
             }
 
             try {
@@ -60,8 +69,8 @@ public class DownloadTaskForCustomList extends AsyncTask<URL, Void, String[]> {
                 Log.e(DownloadTask.class.getName(), "Unable to parse downloaded result.");
             }
         } else {
-            listener.onDataProcessError();
             Log.e(DownloadTask.class.getName(), "Downloaded data is empty.");
+            listener.onDataProcessError();
         }
     }
 }
