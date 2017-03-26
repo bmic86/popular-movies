@@ -13,14 +13,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.android.popularmovies1.FavoritesListStateManager;
+import com.example.android.popularmovies1.PagedDataDownloader;
 import com.example.android.popularmovies1.listeners.MovieListItemClickListener;
 import com.example.android.popularmovies1.data.adapters.MoviesAdapter;
-import com.example.android.popularmovies1.tasks.DownloadTaskForCustomListListener;
-import com.example.android.popularmovies1.tasks.DownloadTaskListener;
+import com.example.android.popularmovies1.listeners.DownloadTaskForCustomListListener;
+import com.example.android.popularmovies1.listeners.DownloadTaskListener;
 import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
 import com.example.android.popularmovies1.data.entities.FavoriteMoviesList;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
 import com.example.android.popularmovies1.data.entities.PageInfo;
+import com.example.android.popularmovies1.listeners.PageChangeClickListener;
 import com.example.android.popularmovies1.tasks.DownloadTask;
 import com.example.android.popularmovies1.tasks.DownloadTaskForCustomList;
 import com.example.android.popularmovies1.utils.AppSettings;
@@ -36,7 +38,8 @@ import java.util.ArrayList;
 public class MoviesListActivity extends SettingsMenuBaseActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener,
         DownloadTaskListener,
-        DownloadTaskForCustomListListener{
+        DownloadTaskForCustomListListener,
+        PagedDataDownloader {
 
     private static final String STORAGE_KEY_MOVIES = "movies";
     private static final String STORAGE_KEY_PAGEINFO = "pageinfo";
@@ -87,24 +90,6 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         recyclerView.setAdapter(moviesAdapter);
     }
 
-    public class PageChangeClickListener implements View.OnClickListener {
-        private int stepSize;
-
-
-        public PageChangeClickListener(int stepSize) {
-            this.stepSize = stepSize;
-        }
-
-        @Override
-        public void onClick(View view) {
-            PageInfo pageInfo = moviesAdapter.getPageInfo();
-            int nextPage = pageInfo.getPageNum() + stepSize;
-            if( nextPage > 0 && nextPage <= pageInfo.getTotalPagesNum()) {
-                downloadData(nextPage);
-            }
-        }
-    }
-
     private void hideError() {
         errorTextView.setVisibility(View.INVISIBLE);
         recyclerView.setVisibility(View.VISIBLE);
@@ -141,7 +126,8 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         }
     }
 
-    private void downloadData(int page) {
+    @Override
+    public void downloadData(int page) {
         if(mode != MoviesListMode.FAVORITES) {
             URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(mode.toURLParam(), page);
             new DownloadTask(this).execute(dataUrl);
@@ -150,6 +136,10 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
             URL[] dataUrls = MoviesUrlBuilder.buildFavoriteMoviesUrls(moviesList.getMovieIds());
             new DownloadTaskForCustomList(this, moviesList.getPageInfo()).execute(dataUrls);
         }
+    }
+    @Override
+    public PageInfo getPageInfo() {
+        return moviesAdapter.getPageInfo();
     }
 
     @Override
@@ -167,10 +157,10 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         recyclerView.setAdapter(new MoviesAdapter(listener));
 
         nextPageButton = (Button) findViewById(R.id.btn_page_next);
-        nextPageButton.setOnClickListener(new PageChangeClickListener(1));
+        nextPageButton.setOnClickListener(new PageChangeClickListener(1, this));
 
         prevPageButton = (Button) findViewById(R.id.btn_page_prev);
-        prevPageButton.setOnClickListener(new PageChangeClickListener(-1));
+        prevPageButton.setOnClickListener(new PageChangeClickListener(-1, this));
 
         pageNumTextView = (TextView) findViewById(R.id.tv_page_num);
 

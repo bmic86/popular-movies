@@ -19,6 +19,9 @@
     <string name="favorites">Favorites</string>
     <string name="show_favorites_key" translatable="false">show_favorites</string>
     <string name="videos_error">Connection error. Unable to load videos.</string>
-    <string name="unsupported_video_site_error">UnsupportedVideoSVideo links from site \\\"%s\\\" are not supported by the current version of an application.</string>
+    <string name="reviews_error">Connection error. Unable to load reviews.</string>
+    <string name="unsupported_video_site_error">Video links from site %s are not supported by the current version of an application.</string>
     <string name="video_open_error">Error. Could not open video.</string>
+    <string name="user_review_header">Review posted by %s</string>
+    <string name="reviews_list_header">User reviews</string>
 </resources>

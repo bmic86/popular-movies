@@ -1,4 +1,4 @@
-package com.example.android.popularmovies1.tasks;
+package com.example.android.popularmovies1.listeners;
 
 public interface BaseDownloadTaskListener {
 

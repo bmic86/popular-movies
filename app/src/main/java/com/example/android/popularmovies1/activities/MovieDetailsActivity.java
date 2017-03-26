@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -15,26 +16,37 @@ import android.widget.Toast;
 
 import com.example.android.popularmovies1.FavoritesListStateManager;
 import com.example.android.popularmovies1.MovieDetailsIntent;
+import com.example.android.popularmovies1.PagedDataDownloader;
 import com.example.android.popularmovies1.R;
 import com.example.android.popularmovies1.data.FavoriteMoviesHelper;
+import com.example.android.popularmovies1.data.adapters.ReviewsAdapter;
 import com.example.android.popularmovies1.data.adapters.VideosAdapter;
 import com.example.android.popularmovies1.data.entities.MovieListItem;
-import com.example.android.popularmovies1.data.entities.MovieListItemDetails;
 import com.example.android.popularmovies1.data.entities.MovieRelatedVideoListItem;
+import com.example.android.popularmovies1.data.entities.MovieReviewListItem;
+import com.example.android.popularmovies1.data.entities.PageInfo;
 import com.example.android.popularmovies1.listeners.MovieRelatedVideoListItemClickListener;
+import com.example.android.popularmovies1.listeners.MovieRelatedVideosDownloadTaskListener;
+import com.example.android.popularmovies1.listeners.MovieReviewsDownloadTaskListener;
+import com.example.android.popularmovies1.listeners.PageChangeClickListener;
 import com.example.android.popularmovies1.tasks.DownloadTask;
-import com.example.android.popularmovies1.tasks.DownloadTaskListener;
+import com.example.android.popularmovies1.tasks.MovieRelatedVideosDownloadTaskHandler;
+import com.example.android.popularmovies1.tasks.MovieReviewsDownloadTaskHandler;
 import com.example.android.popularmovies1.utils.MoviesUrlBuilder;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 
-import java.net.URL;
 import java.util.ArrayList;
 
-public class MovieDetailsActivity extends SettingsMenuBaseActivity implements DownloadTaskListener {
+public class MovieDetailsActivity extends SettingsMenuBaseActivity
+        implements MovieRelatedVideosDownloadTaskHandler,
+        MovieReviewsDownloadTaskHandler,
+        PagedDataDownloader {
 
     private static final String STORAGE_KEY_VIDEOS = "videos";
+    private static final String STORAGE_KEY_REVIEWS_PAGEINFO = "reviews_pageinfo";
+    private static final String STORAGE_KEY_REVIEWS = "reviews";
 
     private TextView originalTitleTextView;
     private TextView overviewTextView;
@@ -47,11 +59,18 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
     private RecyclerView videosRecyclerView;
     private VideosAdapter videosAdapter;
     private MovieRelatedVideoListItemClickListener videoClickListener;
-
-    private ProgressBar progressBar;
+    private ProgressBar videosProgressBar;
     private TextView videosErrorTextView;
 
-    private MovieListItemDetails movieListItemDetails;
+    private RecyclerView reviewsRecyclerView;
+    private ReviewsAdapter reviewsAdapter;
+    private ProgressBar reviewsProgressBar;
+    private TextView reviewsErrorTextView;
+    private Button prevPageButton;
+    private Button nextPageButton;
+    private TextView pageNumTextView;
+
+    private MovieListItem movieListItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,8 +103,14 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
 
         setFavoriteButtonState(FavoriteMoviesHelper.isMovieFavorite(this, listItem.getId()));
 
-        movieListItemDetails = new MovieListItemDetails(listItem);
+        movieListItem = listItem;
+        initializeVideosList();
+        initializeReviewsList();
 
+        loadData(savedInstanceState, listItem.getId());
+    }
+
+    private void initializeVideosList() {
         videosRecyclerView = (RecyclerView) findViewById(R.id.rv_videos_list);
         videosRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         videosRecyclerView.setHasFixedSize(true);
@@ -93,18 +118,43 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
         videosAdapter = new VideosAdapter(videoClickListener);
         videosRecyclerView.setAdapter(videosAdapter);
 
-        progressBar = (ProgressBar) findViewById(R.id.pb_details_loading_indicator);
+        videosProgressBar = (ProgressBar) findViewById(R.id.pb_videos_loading_indicator);
         videosErrorTextView = (TextView) findViewById(R.id.tv_videos_error);
+    }
 
-        loadData(savedInstanceState, listItem.getId());
+    private void initializeReviewsList() {
+        pageNumTextView = (TextView) findViewById(R.id.tv_reviews_page_num);
+
+        nextPageButton = (Button) findViewById(R.id.btn_reviews_page_next);
+        nextPageButton.setOnClickListener(new PageChangeClickListener(1, this));
+
+        prevPageButton = (Button) findViewById(R.id.btn_reviews_page_prev);
+        prevPageButton.setOnClickListener(new PageChangeClickListener(-1, this));
+
+        reviewsRecyclerView = (RecyclerView) findViewById(R.id.rv_reviews_list);
+        reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        reviewsRecyclerView.setHasFixedSize(true);
+        reviewsAdapter = new ReviewsAdapter();
+        reviewsRecyclerView.setAdapter(videosAdapter);
+
+        reviewsProgressBar = (ProgressBar) findViewById(R.id.pb_reviews_loading_indicator);
+        reviewsErrorTextView = (TextView) findViewById(R.id.tv_reviews_error);
     }
 
     private void loadData(Bundle savedInstanceState, long movieId) {
         ArrayList<MovieRelatedVideoListItem> restoredVideosList = null;
+        PageInfo restoredPageInfo = null;
+        ArrayList<MovieReviewListItem> restoredReviews = null;
 
         if(savedInstanceState != null) {
             if(savedInstanceState.containsKey(STORAGE_KEY_VIDEOS)) {
                 restoredVideosList = (ArrayList<MovieRelatedVideoListItem>)(ArrayList<?>)savedInstanceState.getParcelableArrayList(STORAGE_KEY_VIDEOS);
+            }
+            if(savedInstanceState.containsKey(STORAGE_KEY_REVIEWS_PAGEINFO)) {
+                restoredPageInfo = savedInstanceState.getParcelable(STORAGE_KEY_REVIEWS_PAGEINFO);
+            }
+            if(savedInstanceState.containsKey(STORAGE_KEY_REVIEWS)) {
+                restoredReviews = (ArrayList<MovieReviewListItem>)(ArrayList<?>)savedInstanceState.getParcelableArrayList(STORAGE_KEY_REVIEWS);
             }
         }
 
@@ -112,9 +162,18 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
             videosAdapter = new VideosAdapter(restoredVideosList, videoClickListener);
             videosRecyclerView.setAdapter(videosAdapter);
         } else {
-            URL videosUrl = MoviesUrlBuilder.buildMovieRelatedVideosUrl(movieId);
-            new DownloadTask(this).execute(videosUrl);
+            new DownloadTask(new MovieRelatedVideosDownloadTaskListener(this))
+                    .execute(MoviesUrlBuilder.buildMovieRelatedVideosUrl(movieId));
         }
+
+        if(restoredPageInfo != null && restoredReviews != null) {
+            reviewsAdapter = new ReviewsAdapter(restoredReviews, restoredPageInfo);
+            updatePageNumber(restoredPageInfo);
+            reviewsRecyclerView.setAdapter(reviewsAdapter);
+        } else {
+            downloadData(1);
+        }
+
     }
 
     @Override
@@ -123,6 +182,12 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
 
         ArrayList<MovieRelatedVideoListItem> videos = videosAdapter.getVideos();
         outState.putParcelableArrayList(STORAGE_KEY_VIDEOS, videos);
+
+        PageInfo pageInfo = getPageInfo();
+        outState.putParcelable(STORAGE_KEY_REVIEWS_PAGEINFO, pageInfo);
+
+        ArrayList<MovieReviewListItem> reviews = reviewsAdapter.getReviews();
+        outState.putParcelableArrayList(STORAGE_KEY_REVIEWS, reviews);
     }
 
     @Override
@@ -133,7 +198,7 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
     }
 
     public void handleLikeButtonClick(View view) {
-        boolean isFavorite = FavoriteMoviesHelper.changeMovieFavoritesState(this, movieListItemDetails.getMovieListItem());
+        boolean isFavorite = FavoriteMoviesHelper.changeMovieFavoritesState(this, movieListItem);
 
         setFavoriteButtonState(isFavorite);
         FavoritesListStateManager.getInstance().setFavoritesListChanged();
@@ -156,28 +221,6 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
         messageToast.show();
     }
 
-    @Override
-    public void onDataProcessError() {
-        showVideosError();
-    }
-
-    @Override
-    public void onStartDownloadingData() {
-        progressBar.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onStartProcessingData() {
-        progressBar.setVisibility(View.INVISIBLE);
-    }
-
-    @Override
-    public void onDataProcess(String data) throws JSONException {
-        hideVideosError();
-        videosAdapter = new VideosAdapter(data, videoClickListener);
-        videosRecyclerView.setAdapter(videosAdapter);
-    }
-
     private void showVideosError() {
         videosRecyclerView.setVisibility(View.INVISIBLE);
         videosErrorTextView.setVisibility(View.VISIBLE);
@@ -186,5 +229,98 @@ public class MovieDetailsActivity extends SettingsMenuBaseActivity implements Do
     private void hideVideosError() {
         videosRecyclerView.setVisibility(View.VISIBLE);
         videosErrorTextView.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onMovieRelatedVideosProcessError() {
+        showVideosError();
+    }
+
+    @Override
+    public void onMovieRelatedVideosStartDownloading() {
+        videosProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onMovieRelatedVideosStartProcessing() {
+        videosProgressBar.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onMovieRelatedVideosProcess(String data) throws JSONException {
+        hideVideosError();
+        videosAdapter = new VideosAdapter(data, videoClickListener);
+        videosRecyclerView.setAdapter(videosAdapter);
+    }
+
+    private void showReviewsError() {
+        reviewsRecyclerView.setVisibility(View.INVISIBLE);
+        reviewsErrorTextView.setVisibility(View.VISIBLE);
+    }
+
+    private void hideReviewsError() {
+        reviewsRecyclerView.setVisibility(View.VISIBLE);
+        reviewsErrorTextView.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onMovieReviewsProcessError() {
+        showReviewsError();
+    }
+
+    @Override
+    public void onMovieReviewsStartDownloading() {
+        reviewsProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onMovieReviewsStartProcessing() {
+        reviewsProgressBar.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void onMovieReviewsProcess(String data) throws JSONException {
+        hideReviewsError();
+        reviewsAdapter = new ReviewsAdapter(data);
+        updatePageNumber(reviewsAdapter.getPageInfo());
+        reviewsRecyclerView.setAdapter(reviewsAdapter);
+    }
+
+    @Override
+    public void downloadData(int page) {
+        new DownloadTask(new MovieReviewsDownloadTaskListener(this))
+                .execute(MoviesUrlBuilder.buildMovieReviewsUrl(movieListItem.getId(), page));
+    }
+
+    public void updatePageNumber(PageInfo pageNumber) {
+        int pageNum = pageNumber.getPageNum();
+        int totalPagesNum = pageNumber.getTotalPagesNum();
+
+        if(totalPagesNum == 0) {
+            pageNumTextView.setVisibility(View.INVISIBLE);
+            prevPageButton.setVisibility(View.INVISIBLE);
+            prevPageButton.setVisibility(View.INVISIBLE);
+            return;
+        }
+
+        pageNumTextView.setText(String.format(getString(R.string.pageNumberInfo), pageNum, totalPagesNum));
+        pageNumTextView.setVisibility(View.VISIBLE);
+
+        if(pageNum > 1) {
+            prevPageButton.setVisibility(View.VISIBLE);
+        } else {
+            prevPageButton.setVisibility(View.INVISIBLE);
+        }
+
+        if(pageNum < totalPagesNum) {
+            nextPageButton.setVisibility(View.VISIBLE);
+        } else {
+            nextPageButton.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
+    public PageInfo getPageInfo() {
+        return reviewsAdapter.getPageInfo();
     }
 }

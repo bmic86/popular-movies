@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.android.popularmovies1.data.entities.PageInfo;
+import com.example.android.popularmovies1.listeners.DownloadTaskForCustomListListener;
 import com.example.android.popularmovies1.utils.NetworkUtils;
 
 import org.json.JSONException;

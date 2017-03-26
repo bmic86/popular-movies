@@ -32,7 +32,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MoviesView
     public MoviesAdapter(MovieListItemClickListener clickListener) {
         movies = new ArrayList<>();
         this.clickListener = clickListener;
-        pageInfo = new PageInfo(0, 0);
+        pageInfo = new PageInfo();
     }
 
     public MoviesAdapter(PageInfo pageInfo, MovieListItemClickListener clickListener) {

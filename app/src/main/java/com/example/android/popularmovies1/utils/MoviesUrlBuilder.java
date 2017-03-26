@@ -13,6 +13,7 @@ public final class MoviesUrlBuilder {
     private final static String PAGE_QUERY = "page";
     private final static String BASE_URL = "https://api.themoviedb.org/3/movie/";
     private final static String VIDEOS_QUERY = "videos";
+    private final static String REVIEWS_QUERY = "reviews";
 
     private MoviesUrlBuilder() {
     }
@@ -32,6 +33,10 @@ public final class MoviesUrlBuilder {
 
     public static URL buildMovieRelatedVideosUrl(long movieId) {
         return buildUrl(BASE_URL + String.valueOf(movieId) + '/' + VIDEOS_QUERY);
+    }
+
+    public static URL buildMovieReviewsUrl(long movieId, int pageNum ) {
+        return buildUrl(BASE_URL + String.valueOf(movieId) + '/' + REVIEWS_QUERY, pageNum);
     }
 
     private static URL buildUrl(String baseUrl) {

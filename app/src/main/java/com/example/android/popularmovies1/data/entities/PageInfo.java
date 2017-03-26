@@ -19,6 +19,9 @@ public class PageInfo implements Parcelable{
         }
     };
 
+    public PageInfo() {
+    }
+
     public PageInfo(int pageNum, int totalPagesNum) {
         this.pageNum = pageNum;
         this.totalPagesNum = totalPagesNum;
@@ -33,8 +36,16 @@ public class PageInfo implements Parcelable{
         return pageNum;
     }
 
+    public void setPageNum(int value) {
+        pageNum = value;
+    }
+
     public int getTotalPagesNum() {
         return totalPagesNum;
+    }
+
+    public void setTotalPagesNum(int value) {
+        totalPagesNum = value;
     }
 
     @Override
