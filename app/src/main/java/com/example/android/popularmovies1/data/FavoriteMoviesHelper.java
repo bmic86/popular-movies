@@ -41,22 +41,28 @@ public class FavoriteMoviesHelper {
         {
             data = context.getContentResolver().query(generateUri(), null, null, null, null);
             int allItems = data.getCount();
-            int pagesNum = (int)Math.ceil((double)allItems / (double)PAGE_SIZE);
-            if (page <= pagesNum && page >= 1) {
-                int firstItemIndex = (page-1) * PAGE_SIZE;
-                int lastItemIndex = firstItemIndex + PAGE_SIZE - 1;
-                if(allItems - 1 < lastItemIndex) {
-                    lastItemIndex = allItems - 1;
-                }
-                int itemsCount = lastItemIndex - firstItemIndex + 1;
 
-                data.moveToPosition(firstItemIndex);
-                long[] ids = new long[itemsCount];
-                for(int i=0; i<ids.length; i++) {
-                    ids[i] = data.getLong(data.getColumnIndex(FavoriteMoviesContract.FavoriteMoviesContractEntry._ID));
-                    data.moveToNext();
+            if(allItems > 0) {
+                int pagesNum = (int)Math.ceil((double)allItems / (double)PAGE_SIZE);
+                if (page <= pagesNum && page >= 1) {
+                    int firstItemIndex = (page-1) * PAGE_SIZE;
+                    int lastItemIndex = firstItemIndex + PAGE_SIZE - 1;
+                    if(allItems - 1 < lastItemIndex) {
+                        lastItemIndex = allItems - 1;
+                    }
+                    int itemsCount = lastItemIndex - firstItemIndex + 1;
+
+                    data.moveToPosition(firstItemIndex);
+                    long[] ids = new long[itemsCount];
+                    for(int i=0; i<ids.length; i++) {
+                        ids[i] = data.getLong(data.getColumnIndex(FavoriteMoviesContract.FavoriteMoviesContractEntry._ID));
+                        data.moveToNext();
+                    }
+                    result = new FavoriteMoviesList(ids, page, pagesNum);
                 }
-                result = new FavoriteMoviesList(ids, page, pagesNum);
+            }
+            else {
+                result = new FavoriteMoviesList();
             }
         }
         catch (Exception ex)

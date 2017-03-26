@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -141,10 +142,25 @@ public class MoviesListActivity extends SettingsMenuBaseActivity
         if(mode != MoviesListMode.FAVORITES) {
             URL dataUrl = MoviesUrlBuilder.buildPopularMoviesURL(mode.toURLParam(), page);
             new DownloadTask(this).execute(dataUrl);
-        } else {
+        }
+        else {
             FavoriteMoviesList moviesList = FavoriteMoviesHelper.getFavoriteMoviesList(this, page);
-            URL[] dataUrls = MoviesUrlBuilder.buildFavoriteMoviesUrls(moviesList.getMovieIds());
-            new DownloadTaskForCustomList(this, moviesList.getPageInfo()).execute(dataUrls);
+
+            if(moviesList == null) {
+                Log.e(getClass().getSimpleName(), "Error while reading favorite movies from database.");
+            }
+            else if (moviesList.getMovieIds().length == 0) {
+                moviesAdapter = new MoviesAdapter(listener);
+                updatePageNumber(getPageInfo());
+                recyclerView.setAdapter(moviesAdapter);
+
+                moviesListHeaderTextView.setText(mode.toListDisplayHeader(getBaseContext()));
+            }
+            else {
+                URL[] dataUrls = MoviesUrlBuilder.buildFavoriteMoviesUrls(moviesList.getMovieIds());
+                new DownloadTaskForCustomList(this, moviesList.getPageInfo()).execute(dataUrls);
+            }
+
         }
     }
     @Override
